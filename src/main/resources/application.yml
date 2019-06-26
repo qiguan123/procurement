@@ -1,0 +1,14 @@
+server:
+  port: 9000
+  context-path: /procure
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/procurement?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false  
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+  
+gradeTable:
+  location: C:\procurement\
