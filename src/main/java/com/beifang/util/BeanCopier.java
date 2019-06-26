@@ -1,18 +1,19 @@
 package com.beifang.util;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.dozer.DozerBeanMapper;
-import org.dozer.Mapper;
+import com.github.dozermapper.core.DozerBeanMapperBuilder;
+import com.github.dozermapper.core.Mapper;
 
 
 /**
  * map到map的copy有问题
  */
 public class BeanCopier {
-	private static Mapper mapper = new DozerBeanMapper();
+	private static Mapper mapper = DozerBeanMapperBuilder.buildDefault();
 	
 	public static <T> T copy(Object obj, Class<T> clazz) {
 		if (obj == null) {
@@ -33,12 +34,12 @@ public class BeanCopier {
 	}
 	
 	public static void main(String[] args) {
-		LinkedHashMap<String, LinkedHashMap<String, String>> m1 = new LinkedHashMap<>();
-		LinkedHashMap<String, String> m1m = new LinkedHashMap<>(); 
+		Map<String, Map<String, String>> m1 = new HashMap<>();
+		Map<String, String> m1m = new HashMap<>(); 
 		m1.put("aa", m1m);
 		m1m.put("bb", "cc");
 		
-		LinkedHashMap<String, String> copy = copy(m1m, m1m.getClass());
+		HashMap<String, String> copy = copy(m1m, HashMap.class);
 		copy.size();
 	}
 }

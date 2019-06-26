@@ -5,11 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -38,6 +36,8 @@ import com.beifang.service.dto.ProjectDto;
 import com.beifang.util.BeanCopier;
 import com.beifang.util.ExcelUtil;
 import com.beifang.util.ListUtil;
+import com.beifang.util.MathUtil;
+import com.beifang.util.ZipUtil;
 import com.beifang.util.func.ExpertGetIdFunction;
 import com.beifang.util.func.PkgDtoGetIdFunction;
 import com.beifang.util.func.ProjectDtoGetIdFunction;
@@ -309,79 +309,65 @@ public class PackageService {
 		if (pkg == null) {
 			throw new RuntimeException("package not exist");
 		}
-		File excel = makeGradeTableExcel(
+		List<File> excels = makeGradeTableExcels(
 				pkg, gradeTableRootDir + File.separator + pkgId);
 		try {
-			return Files.toByteArray(excel);
+			File excelZip = ZipUtil.makeZip(excels, "评分表.zip");
+			return Files.toByteArray(excelZip);
 		} catch(Exception e) {
 			throw new RuntimeException("读取 专家评分结果.xls失败", e);
 		}
 	}
 	
-	private File makeGradeTableExcel(PackageDto pkg, String dir) {
-		File result = new File(dir, "专家评分结果.xls");
-		if (!result.exists()) {
-			try {
-				result.createNewFile();
-			} catch (IOException e) {
-				throw new RuntimeException("创建评分表出错", e);
-			}
-		}
-		Workbook wb = new HSSFWorkbook();
-		List<String> headers = makeExcelTableHeaders(pkg);
-		Map<Long, List<List<String>>> expertRows = makeExcelContentRows(pkg);
-		try (FileOutputStream out = new FileOutputStream(result);) {
+	private List<File> makeGradeTableExcels(PackageDto pkg, String dir) {
+		List<File> result = new ArrayList<>();
+		File rawTable = new File(dir, "评分表.xls");
+		try {
 			for (Expert e: pkg.getExperts()) {
-				//创建sheet
-				Sheet sheet = ExcelUtil.newSheet(wb, e.getName());
-				//标题
-				ExcelUtil.writeRow(sheet, 0, Arrays.asList(pkg.getName()));
-				//表头
-				ExcelUtil.writeRow(sheet, 1, headers);
-				//内容
-				ExcelUtil.writeRows(sheet, 2, expertRows.get(e.getId()));
-				//落款
-				ExcelUtil.writeRow(sheet, expertRows.get(e.getId()).size() + 2,
-						Arrays.asList(e.getName(), new Date().toString()));
+				//复制上传模板
+				File expertTable = new File(
+						dir, e.getName() + "_" + e.getId() +"_评分结果.xls");
+				if (!expertTable.exists()) {
+					expertTable.createNewFile();
+				}
+				Files.copy(rawTable, expertTable);
+				//填充模板
+				fillGradeTable(expertTable, e, pkg);
+				result.add(expertTable);
 			}
-			wb.write(out);
-		} catch(IOException e) {
-			throw new RuntimeException("创建评分表出错", e);
+		} catch (IOException ex) {
+			throw new RuntimeException("创建评分表出错", ex);
 		}
 		return result;
 	}
 
-	private Map<Long, List<List<String>>> makeExcelContentRows(PackageDto pkg) {
-		Map<Long, List<List<String>>> expertContent = new HashMap<>();
-		for (GradeItemDto item: pkg.getAllItems()) {
-			for (Entry<Long, Map<Long, ItemScore>> expertBidderScore : 
-				item.getExpertBidderScores().entrySet()) {
-				Long expertId = expertBidderScore.getKey();
-				List<List<String>> rows = expertContent.get(expertId);
-				if (ListUtil.isEmpty(rows)) {
-					rows = new ArrayList<>();
-					expertContent.put(expertId, rows);
-				}
-				List<String> row = new ArrayList<>();
-				row.add(item.getName());
-				row.add(String.valueOf(item.getMaxValue()));
-				for (Bidder b: pkg.getBidders()) {
-					row.add("" + expertBidderScore.getValue().get(b.getId()).getScore());
-				}
-				rows.add(row);
-			}
-		}
-		return expertContent;
+	private void fillGradeTable(File expertTable, Expert e, PackageDto pkg) {
+		List<List<String>> expertScores = makeExcelScoreRows(pkg, e);
+		try (Workbook wb = new HSSFWorkbook();
+			FileOutputStream out = new FileOutputStream(expertTable);) {
+			Sheet sheet = wb.getSheetAt(0);
+			//总分项
+			ExcelUtil.writeRow(sheet, sheet.getLastRowNum() + 1, 0, 
+				Arrays.asList("总分","总分","","",""+pkg.getTotalItem().getMaxValue(),""));
+			//分数
+			ExcelUtil.writeRows(sheet, 1, 6, expertScores);
+			wb.write(out);
+		} catch(IOException ex) {
+			throw new RuntimeException("创建评分表出错", ex);
+		}		
 	}
 
-	private List<String> makeExcelTableHeaders(PackageDto pkg) {
-		List<String> headers = new ArrayList<>();
-		headers.add("二级项");
-		headers.add("分值");
-		for (Bidder b: pkg.getBidders()) {
-			headers.add(b.getName());
+	private List<List<String>> makeExcelScoreRows(PackageDto pkg, Expert e) {
+		List<List<String>> scores = new ArrayList<>();
+		for (GradeItemDto item: pkg.getAllItems()) {
+			Map<Long, ItemScore> bidderScores = item.getExpertBidderScores().get(e.getId());
+			List<String> row = new ArrayList<>();
+			for (Bidder b: pkg.getBidders()) {
+				row.add("" + bidderScores.get(b.getId()).getScore());
+			}
+			scores.add(row);
 		}
-		return headers;
+		return scores;
 	}
 
 	/**
@@ -426,7 +412,8 @@ public class PackageService {
 		}
 		//设置该专家的总分
 		for (ItemScore s: expertTotalScores) {
-			s.setScore(bidderTotalScoreMap.get(s.getBidderId()));
+			s.setScore(
+				MathUtil.toDecimal(bidderTotalScoreMap.get(s.getBidderId()), 2));
 		}
 		itemService.updateScoreList(expertTotalScores);
 	}

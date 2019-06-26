@@ -1,5 +1,6 @@
-上传评分表保存路径 C:\procurement\{pkgId}\评分表.xsl
-"xx项目xx号包 评分表"
+上传评分表保存路径 C:\procurement\{pkgId}\评分表.xls
+导出时生成的专家评分表 路径 C:\procurement\{pkgId}\{专家姓名}_{专家id}_评分结果.xls
+
 ItemScore在创建package的时候生成，之后的所有操作都是修改ItemScore
 
 分类	二级项目	评价内容	评分标准	分值项	评审依据

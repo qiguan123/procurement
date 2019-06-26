@@ -84,7 +84,7 @@ public class PackageController {
 	}
 	
 	/**
-	 * 导出包的评分表
+	 * 导出包的评分表zip
 	 */
 	@RequestMapping(path = "/{id}/score/export", method = RequestMethod.GET)
 	public void exportPkgScores(@PathVariable Long id,
@@ -92,7 +92,7 @@ public class PackageController {
 		
 		byte[] scoreExcel = packageService.getPkgWithTotalExcel(id);
 		rsp.setContentType("text/plain");
-		rsp.setHeader("Content-disposition", "attachment;filename=score-pkg-" + id + ".xls");
+		rsp.setHeader("Content-disposition", "attachment;filename=score-pkg-" + id + ".zip");
 		try (OutputStream out = rsp.getOutputStream();) {
 			out.write(scoreExcel);
 		} catch (IOException e) {

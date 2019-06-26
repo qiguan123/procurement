@@ -49,7 +49,7 @@ public class ExcelUtil {
 	}
 	
 	private static String getCellStringValue(Cell c) {
-		CellType cellTypeEnum = c.getCellTypeEnum();
+		CellType cellTypeEnum = c.getCellType();
 		if (cellTypeEnum == CellType.STRING) {
 			return c.getStringCellValue();
 		} else if (cellTypeEnum == CellType.NUMERIC) {
@@ -70,16 +70,16 @@ public class ExcelUtil {
 		return wb.createSheet(name);
 	}
 
-	public static void writeRow(Sheet sheet, int start, List<String> rowContent) {
-		Row row = sheet.createRow(start);
-		for (int i = 0; i < rowContent.size(); i++) {
+	public static void writeRow(Sheet sheet, int rowStart, int columnStart, List<String> rowContent) {
+		Row row = sheet.createRow(rowStart);
+		for (int i = columnStart; i < rowContent.size(); i++) {
 			row.createCell(i).setCellValue(rowContent.get(i));
 		}
 	}
 
-	public static void writeRows(Sheet sheet, int start, List<List<String>> rows) {
-		for (int i = 0; i < rows.size(); i++) {
-			writeRow(sheet, start + i, rows.get(i));
+	public static void writeRows(Sheet sheet, int rowStart, int columnStart, List<List<String>> rows) {
+		for (int i = columnStart; i < rows.size(); i++) {
+			writeRow(sheet, rowStart + i, columnStart, rows.get(i));
 		}
 	}
 }

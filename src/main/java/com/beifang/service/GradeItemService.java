@@ -35,7 +35,8 @@ public class GradeItemService {
 		List<List<String>> rows = ExcelUtil.readRows(gradeTableFile);
 		double totalScore = 0.0;
 		List<GradeItem> items = new ArrayList<>();
-		for (int i = 1; i < rows.size(); i++) {
+		//跳过 表名、表头
+		for (int i = 2; i < rows.size(); i++) {
 			GradeItem item = makeItemFromExcelRow(rows.get(i));
 			totalScore += item.getMaxValue();
 			item.setPackageId(pkg.getId());
