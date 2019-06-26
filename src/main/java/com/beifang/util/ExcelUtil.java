@@ -71,14 +71,22 @@ public class ExcelUtil {
 	}
 
 	public static void writeRow(Sheet sheet, int rowStart, int columnStart, List<String> rowContent) {
-		Row row = sheet.createRow(rowStart);
-		for (int i = columnStart; i < rowContent.size(); i++) {
-			row.createCell(i).setCellValue(rowContent.get(i));
+		Row row = sheet.getRow(rowStart);
+		if (row == null) {
+			row = sheet.createRow(rowStart);
+		}
+		for (int i = 0; i < rowContent.size(); i++) {
+			int rowIdx = columnStart + i;
+			Cell cell = row.getCell(rowIdx);
+			if (cell == null) {
+				cell = row.createCell(rowIdx);
+			}
+			cell.setCellValue(rowContent.get(i));
 		}
 	}
 
 	public static void writeRows(Sheet sheet, int rowStart, int columnStart, List<List<String>> rows) {
-		for (int i = columnStart; i < rows.size(); i++) {
+		for (int i = 0; i < rows.size(); i++) {
 			writeRow(sheet, rowStart + i, columnStart, rows.get(i));
 		}
 	}

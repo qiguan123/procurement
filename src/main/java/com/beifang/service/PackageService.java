@@ -1,17 +1,20 @@
 package com.beifang.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,7 @@ import com.beifang.service.dto.GradeItemDto;
 import com.beifang.service.dto.PackageDto;
 import com.beifang.service.dto.ProjectDto;
 import com.beifang.util.BeanCopier;
+import com.beifang.util.DateTimeFormatUtil;
 import com.beifang.util.ExcelUtil;
 import com.beifang.util.ListUtil;
 import com.beifang.util.MathUtil;
@@ -343,15 +347,26 @@ public class PackageService {
 
 	private void fillGradeTable(File expertTable, Expert e, PackageDto pkg) {
 		List<List<String>> expertScores = makeExcelScoreRows(pkg, e);
-		try (Workbook wb = new HSSFWorkbook();
-			FileOutputStream out = new FileOutputStream(expertTable);) {
+		try (FileInputStream in = new FileInputStream(expertTable);
+			Workbook wb = WorkbookFactory.create(in);) {
+			
 			Sheet sheet = wb.getSheetAt(0);
-			//总分项
-			ExcelUtil.writeRow(sheet, sheet.getLastRowNum() + 1, 0, 
-				Arrays.asList("总分","总分","","",""+pkg.getTotalItem().getMaxValue(),""));
+			//厂商名称
+			ExcelUtil.writeRow(sheet, 1, 6,
+				ListUtil.extractDistinctList(pkg.getBidders(), Bidder::getName));
 			//分数
-			ExcelUtil.writeRows(sheet, 1, 6, expertScores);
-			wb.write(out);
+			ExcelUtil.writeRows(sheet, 2, 6, expertScores);
+			//总分分值
+			ExcelUtil.writeRow(sheet, sheet.getLastRowNum() - 2, 4, 
+				Arrays.asList("" + pkg.getTotalItem().getMaxValue()));
+			//专家+时间
+			ExcelUtil.writeRow(sheet, sheet.getLastRowNum() - 1, 0,
+				Arrays.asList(e.getName()));
+			ExcelUtil.writeRow(sheet, sheet.getLastRowNum(), 0,
+					Arrays.asList(DateTimeFormatUtil.format(new Date())));
+			try (FileOutputStream out = new FileOutputStream(expertTable);) {
+				wb.write(out);
+			}
 		} catch(IOException ex) {
 			throw new RuntimeException("创建评分表出错", ex);
 		}		
