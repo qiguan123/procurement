@@ -12,6 +12,7 @@ public class PackageExpertRelation {
 	private Long expertId;
 	
 	private int modifiable = 1;
+	private Long modifyTime;
 	
 	public PackageExpertRelation() {
 		super();
@@ -22,6 +23,12 @@ public class PackageExpertRelation {
 		this.expertId = expertId;
 	}
 	
+	public Long getModifyTime() {
+		return modifyTime;
+	}
+	public void setModifyTime(Long modifyTime) {
+		this.modifyTime = modifyTime;
+	}
 	public int getModifiable() {
 		return modifiable;
 	}

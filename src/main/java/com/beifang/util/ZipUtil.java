@@ -12,8 +12,7 @@ import com.google.common.io.Files;
 
 public class ZipUtil {
 
-	public static File makeZip(List<File> files, String zipName) throws IOException {
-		File zip = new File(zipName);
+	public static File makeZip(List<File> files, File zip) throws IOException {
 		if (!zip.exists()) {
 			zip.createNewFile();
 		}

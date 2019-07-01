@@ -12,3 +12,5 @@ spring:
   
 gradeTable:
   location: C:\procurement\
+socketIo:
+  port: 9100

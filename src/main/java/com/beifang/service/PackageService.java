@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -191,7 +190,14 @@ public class PackageService {
 	public PackageDto getPkgWithScores(Long id) {
 		PackageDto pkgDto = getById(id);
 		setPkgsItemScore(Arrays.asList(pkgDto));
+		setPkgBidPrices(pkgDto);
 		return pkgDto;
+	}
+
+	private void setPkgBidPrices(PackageDto pkgDto) {
+		List<BidPrice> bidPrices = bidPriceRepo.findByPackageIdIn(
+				Arrays.asList(pkgDto.getId()));
+		pkgDto.setBidPrices(bidPrices);
 	}
 
 	/**
@@ -313,10 +319,10 @@ public class PackageService {
 		if (pkg == null) {
 			throw new RuntimeException("package not exist");
 		}
-		List<File> excels = makeGradeTableExcels(
-				pkg, gradeTableRootDir + File.separator + pkgId);
+		String dir = gradeTableRootDir + File.separator + pkgId;
+		List<File> excels = makeGradeTableExcels(pkg, dir);
 		try {
-			File excelZip = ZipUtil.makeZip(excels, "评分表.zip");
+			File excelZip = ZipUtil.makeZip(excels, new File(dir, "评分表.zip"));
 			return Files.toByteArray(excelZip);
 		} catch(Exception e) {
 			throw new RuntimeException("读取 专家评分结果.xls失败", e);
@@ -437,7 +443,7 @@ public class PackageService {
 	 * 设置专家对包的评分不可变
 	 */
 	private void setPkgExpertGradeUnmodifiable(Long pkgId, Long expertId) {
-		pkgExpertRepo.setUnmodifiable(pkgId, expertId);
+		pkgExpertRepo.setUnmodifiable(pkgId, expertId, new Date().getTime());
 	}
 
 	/**

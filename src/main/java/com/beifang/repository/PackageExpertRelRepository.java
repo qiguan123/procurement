@@ -12,8 +12,8 @@ public interface PackageExpertRelRepository extends PagingAndSortingRepository<P
 
 	List<PackageExpertRelation> findByPackageIdIn(List<Long> pkgIds);
 
-	@Query("update PackageExpertRelation r set r.modifiable = 0 where r.packageId=?1 and r.expertId=?2")
+	@Query("update PackageExpertRelation r set r.modifiable=0, r.modifyTime=?3 where r.packageId=?1 and r.expertId=?2")
 	@Modifying
-	int setUnmodifiable(Long pkgId, Long expertId);
+	int setUnmodifiable(Long pkgId, Long expertId, Long time);
 
 }
