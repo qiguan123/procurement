@@ -9,8 +9,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-  
 gradeTable:
   location: C:\procurement\
-socketIo:
-  port: 9100
+    
