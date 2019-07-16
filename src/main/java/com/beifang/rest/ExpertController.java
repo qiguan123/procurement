@@ -1,7 +1,9 @@
 package com.beifang.rest;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,10 +37,10 @@ public class ExpertController {
 	@RequestMapping(path = "/cfrs", method = RequestMethod.GET)
 	public List<Expert> getByCfrsId(@RequestParam Long cfrsId) {
 		List<PackageDto> pkgs = pkgService.getAllByCfrsId(cfrsId);
-		List<Expert> result = new ArrayList<>();
+		Set<Expert> result = new HashSet<>();
 		for (PackageDto p : pkgs) {
 			result.addAll(p.getExperts());
 		}
-		return result;
+		return new ArrayList<>(result);
 	}
 }
