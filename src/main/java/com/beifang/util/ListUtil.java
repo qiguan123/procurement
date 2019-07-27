@@ -1,8 +1,8 @@
 package com.beifang.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -23,7 +23,7 @@ public class ListUtil {
 	}
 	
 	public static <F, T> Map<T, F> list2Map(Iterable<F> list, Function<F, T> key) {
-		Map<T, F> result = new HashMap<>();
+		Map<T, F> result = new LinkedHashMap<>();
 		Iterator<F> itr = list.iterator();
 		while (itr.hasNext()) {
 			F f = itr.next();
