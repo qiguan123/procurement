@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -475,14 +476,19 @@ public class PackageService {
 		 Map<Long, Double> bidderPrices = new HashMap<>();
 		 for (BidPrice p: prices) {
 			 double percent = (p.getPrice() - mean) / mean * 100;
+			 //fix double precision problem
+			 percent += 0.000001;
 			 if (percent > 0) {
-				 bidderPrices.put(p.getBidderId(), maxValue - Math.round(percent) * 1.0);
+				 bidderPrices.put(p.getBidderId(), 
+					new BigDecimal(maxValue).subtract(new BigDecimal(Math.round(percent))).doubleValue());
 			 } else {
-				 bidderPrices.put(p.getBidderId(), maxValue - Math.round(-1 * percent) * 0.8);
+				 bidderPrices.put(p.getBidderId(), 
+					new BigDecimal(maxValue).subtract(new BigDecimal(Math.round(-1 * percent) * 0.8)).doubleValue());
 			 }
 		 }
 		 for (ItemScore s: scores) {
-			 s.setScore(bidderPrices.get(s.getBidderId()));
+			 double priceScore = bidderPrices.get(s.getBidderId());
+			 s.setScore(priceScore < 0 ? 0 : priceScore);
 		 }
 		 
 	}
