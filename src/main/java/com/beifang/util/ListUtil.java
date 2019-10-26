@@ -32,4 +32,14 @@ public class ListUtil {
 		return result;
 	}
 	
+	public static <F, K, V> Map<K, V> list2Map(Iterable<F> list, Function<F, K> key, Function<F, V> value) {
+		Map<K, V> result = new LinkedHashMap<>();
+		Iterator<F> itr = list.iterator();
+		while (itr.hasNext()) {
+			F f = itr.next();
+			result.put(key.apply(f), value.apply(f));
+		}
+		return result;
+	}
+	
 }

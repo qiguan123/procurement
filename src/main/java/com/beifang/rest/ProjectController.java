@@ -7,8 +7,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.beifang.common.PageResult;
 import com.beifang.rest.vo.ProjectRequestVo;
 import com.beifang.rest.vo.ProjectResponseVo;
 import com.beifang.service.ProjectService;
@@ -23,9 +25,14 @@ public class ProjectController {
 	private ProjectService projectService;
 	
 	@RequestMapping(path = "", method = RequestMethod.GET)
-	public List<ProjectResponseVo> getAll() {
-		List<ProjectDto> projectDtos = projectService.getAll();
-		return BeanCopier.copy(projectDtos, ProjectResponseVo.class);
+	public PageResult<ProjectResponseVo> getPageByName(
+			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "20") Integer limit,
+			@RequestParam(required = false) String name) {
+		
+		PageResult<ProjectDto> pageResult = projectService.getPageByName(page, limit, name);
+		List<ProjectResponseVo> restData = BeanCopier.copy(pageResult.getData(), ProjectResponseVo.class);
+		return new PageResult<>(pageResult.getTotal(), restData);
 	}
 	
 	@RequestMapping(path = "{id}", method = RequestMethod.GET)

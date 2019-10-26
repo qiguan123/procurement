@@ -17,9 +17,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.beifang.common.PageResult;
 import com.beifang.model.BidPrice;
 import com.beifang.model.Bidder;
 import com.beifang.model.Expert;
@@ -493,15 +497,31 @@ public class PackageService {
 		 
 	}
 
-	public List<PackageDto> getAll() {
-		Iterable<ProcurePackage> pkgs = packageRepo.findAll();
-		List<PackageDto> pkgDtos = BeanCopier.copy(pkgs, PackageDto.class);
-		if (ListUtil.isEmpty(pkgDtos)) {
-			return pkgDtos;
+	public PageResult<PackageDto> getPageByName(Integer page, Integer limit, String name) {
+		Pageable pageRequest = new PageRequest(page - 1, limit);
+		Page<ProcurePackage> searchResult = null; 
+		if (name == null || name.isEmpty() || name.trim().isEmpty()) {
+			searchResult = packageRepo.findAll(pageRequest);
+		} else {
+			searchResult = packageRepo.findByNameContaining(name, pageRequest);
 		}
-		setPkgsBidder(pkgDtos);
-		setPkgsExpert(pkgDtos);
-		return pkgDtos;
+		List<PackageDto> pkgDtos = BeanCopier.copy(searchResult.getContent(), PackageDto.class);
+		setProjectName(pkgDtos);
+		PageResult<PackageDto> result = new PageResult<>(searchResult.getTotalElements(), pkgDtos);
+		return result;
 	}
+
+	private void setProjectName(List<PackageDto> pkgDtos) {
+		if (ListUtil.isEmpty(pkgDtos)) {
+			return;
+		}
+		List<ProjectDto> projectDtos = projectService.getByIds(
+			ListUtil.extractDistinctList(pkgDtos, PackageDto::getProjectId));
+		Map<Long, String> projectIdWithNameMap = ListUtil.list2Map(projectDtos, ProjectDto::getId, ProjectDto::getName);
+		for (PackageDto p: pkgDtos) {
+			p.setProjectName(projectIdWithNameMap.get(p.getProjectId()));
+		}
+	}
+	
 
 }

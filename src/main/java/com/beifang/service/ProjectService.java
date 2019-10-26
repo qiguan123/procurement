@@ -2,10 +2,15 @@ package com.beifang.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.beifang.common.PageResult;
 import com.beifang.model.Project;
 import com.beifang.repository.ProjectRepository;
 import com.beifang.service.dto.ConferenceDto;
@@ -26,11 +31,31 @@ public class ProjectService {
 		return BeanCopier.copy(project, ProjectDto.class);
 	}
 
-	public List<ProjectDto> getAll() {
-		Iterable<Project> projects = projectRepo.findAll();
-		return BeanCopier.copy(projects, ProjectDto.class);
+	public PageResult<ProjectDto> getPageByName(Integer page, Integer limit, String name) {
+		Page<Project> projectPage = null;
+		Pageable pageRequest = new PageRequest(page -1, limit);
+		if (name == null || name.isEmpty() || name.trim().isEmpty()) {
+			projectPage = projectRepo.findAll(pageRequest);
+		} else {
+			projectPage = projectRepo.findByNameContaining(name.trim(), pageRequest);
+		}
+		List<ProjectDto> projectDtos = BeanCopier.copy(projectPage.getContent(), ProjectDto.class);
+		setCfrsName(projectDtos);
+		return new PageResult<>(projectPage.getTotalElements(), projectDtos);
 	}
 	
+	private void setCfrsName(List<ProjectDto> projectDtos) {
+		if (ListUtil.isEmpty(projectDtos)) {
+			return;
+		}
+		List<Long> cfrsIds = ListUtil.extractDistinctList(projectDtos, ProjectDto::getCfrsId);
+		List<ConferenceDto> cfrsList = cfrsService.getByIds(cfrsIds);
+		Map<Long, String> cfrsIdWithNameMap = ListUtil.list2Map(cfrsList, ConferenceDto::getId, ConferenceDto::getName);
+		for (ProjectDto p: projectDtos) {
+			p.setCfrsName(cfrsIdWithNameMap.get(p.getCfrsId()));
+		}
+	}
+
 	public List<ProjectDto> getByCfrsId(Long cfrsId) {
 		List<Project> projectList = projectRepo.findByCfrsId(cfrsId);
 		if (ListUtil.isEmpty(projectList)) {
@@ -46,6 +71,11 @@ public class ProjectService {
 		ConferenceDto cfrs = cfrsService.getById(dto.getCfrsId());
 		dto.setCfrsName(cfrs.getName());
 		return dto;
+	}
+
+	public List<ProjectDto> getByIds(List<Long> ids) {
+		Iterable<Project> projects = projectRepo.findAll(ids);
+		return BeanCopier.copy(projects, ProjectDto.class);
 	}
 	
 }

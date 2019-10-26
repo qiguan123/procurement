@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.beifang.common.PageResult;
 import com.beifang.exception.NoConferenceException;
 import com.beifang.rest.vo.ConferenceRequestVo;
 import com.beifang.rest.vo.ConferenceResponseVo;
@@ -50,12 +51,24 @@ public class ConferenceController {
 	 * 会议列表
 	 */
 	@RequestMapping(path = "", method = RequestMethod.GET)
-	public List<ConferenceResponseVo> getAll() {
-		List<ConferenceDto> conferences = cfrsService.getAll();
-		if (ListUtil.isEmpty(conferences)) {
-			throw new NoConferenceException();
-		}
-		return BeanCopier.copy(conferences, ConferenceResponseVo.class);
+	public PageResult<ConferenceResponseVo> getPageByName(
+			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "20") Integer limit,
+			@RequestParam(required = false) String name) {
+		
+		PageResult<ConferenceDto> pageResult = cfrsService.getPageByName(page, limit, name);
+		List<ConferenceResponseVo> restData = BeanCopier.copy(
+				pageResult.getData(), ConferenceResponseVo.class);
+		return new PageResult<>(pageResult.getTotal(), restData);
+	}
+	
+	/**
+	 *未开始的会议列表
+	 */
+	@RequestMapping(path = "/prepared", method = RequestMethod.GET)
+	public List<ConferenceResponseVo> getPreparedCfrsList() {
+		List<ConferenceDto> cfrsList = cfrsService.getPreparedCfrsList();
+		return BeanCopier.copy(cfrsList, ConferenceResponseVo.class);
 	}
 	
 	/**

@@ -17,11 +17,13 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.beifang.common.PageResult;
 import com.beifang.exception.UploadGradeTableException;
 import com.beifang.model.BidPrice;
 import com.beifang.model.ItemScore;
 import com.beifang.rest.vo.ItemScoreRequestVo;
 import com.beifang.rest.vo.PackageRequestVo;
+import com.beifang.rest.vo.PackageResponseVo;
 import com.beifang.rest.vo.PriceWithPriceItemRequestVo;
 import com.beifang.service.PackageService;
 import com.beifang.service.dto.PackageDto;
@@ -149,8 +151,14 @@ public class PackageController {
 	 */
 	@RequestMapping(path = "", method = RequestMethod.GET)
 	@ResponseBody
-	public List<PackageDto> getAll() {
-		return packageService.getAll();
+	public PageResult<PackageResponseVo> getPageByName(
+			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "20") Integer limit,
+			@RequestParam(required = false) String name) {
+		
+		PageResult<PackageDto> pageResult = packageService.getPageByName(page, limit, name);
+		List<PackageResponseVo> restData = BeanCopier.copy(pageResult.getData(), PackageResponseVo.class);
+		return new PageResult<>(pageResult.getTotal(), restData);
 	}
 	
 	/**
