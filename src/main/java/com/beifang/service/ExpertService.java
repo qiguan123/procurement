@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import com.beifang.common.PageResult;
 import com.beifang.model.Expert;
 import com.beifang.repository.ExpertRepository;
+import com.beifang.service.dto.ExpertDto;
+import com.beifang.util.BeanCopier;
 import com.beifang.util.ListUtil;
 
 @Service
@@ -40,6 +42,11 @@ public class ExpertService {
 		if (expert != null) {
 			expertRepo.save(expert);
 		}
+	}
+
+	public List<ExpertDto> getSimpleAll() {
+		Iterable<Expert> experts = expertRepo.findAll();
+		return BeanCopier.copy(experts, ExpertDto.class);
 	}
 	
 }

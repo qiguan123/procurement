@@ -51,4 +51,10 @@ public class ProjectController {
 		return BeanCopier.copy(projectDto, ProjectResponseVo.class);
 	}
 	
+	@RequestMapping(path = "/unstarted", method = RequestMethod.GET)
+	public List<ProjectResponseVo> unstartedProjects() {
+		List<ProjectDto> projects = projectService.getUnstartedProjects();
+		return BeanCopier.copy(projects, ProjectResponseVo.class);
+	}
+	
 }

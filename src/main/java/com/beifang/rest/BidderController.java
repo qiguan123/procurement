@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.beifang.common.PageResult;
 import com.beifang.model.Bidder;
+import com.beifang.rest.vo.BidderResponseVo;
 import com.beifang.service.BidderService;
+import com.beifang.service.dto.BidderDto;
+import com.beifang.util.BeanCopier;
 
 @RestController
 @RequestMapping("/bidder")
@@ -43,5 +46,15 @@ public class BidderController {
 	public String addBidderExpert(@RequestBody Bidder bidder) {
 		bidderService.saveBidder(bidder);
 		return "ok";
+	}
+	
+	/**
+	 *所有应标人的简单信息 
+	 */
+	@RequestMapping(path = "/simple", method = RequestMethod.GET)
+	@ResponseBody
+	public List<BidderResponseVo> getSimpleAll() {
+		List<BidderDto> all = bidderService.getSimpleAll();
+		return BeanCopier.copy(all, BidderResponseVo.class);
 	}
 }

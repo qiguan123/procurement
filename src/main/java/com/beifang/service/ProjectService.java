@@ -77,5 +77,17 @@ public class ProjectService {
 		Iterable<Project> projects = projectRepo.findAll(ids);
 		return BeanCopier.copy(projects, ProjectDto.class);
 	}
+
+	public List<ProjectDto> getUnstartedProjects() {
+		List<ConferenceDto> preparedCfrsList = cfrsService.getPreparedCfrsList();
+		if (ListUtil.isEmpty(preparedCfrsList)) {
+			return new ArrayList<>();
+		}
+		List<Long> cfrsIds = ListUtil.extractDistinctList(preparedCfrsList, ConferenceDto::getId);
+		List<Project> projects = projectRepo.findByCfrsIdIn(cfrsIds);
+		List<ProjectDto> projectDtos = BeanCopier.copy(projects, ProjectDto.class);
+		setCfrsName(projectDtos);
+		return projectDtos;
+	}
 	
 }

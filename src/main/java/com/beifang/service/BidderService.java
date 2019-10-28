@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import com.beifang.common.PageResult;
 import com.beifang.model.Bidder;
 import com.beifang.repository.BidderRepository;
+import com.beifang.service.dto.BidderDto;
+import com.beifang.util.BeanCopier;
 
 @Service
 public class BidderService {
@@ -34,5 +36,10 @@ public class BidderService {
 
 	public void saveBidder(Bidder bidder) {
 		bidderRepo.save(bidder);
+	}
+	
+	public List<BidderDto> getSimpleAll() {
+		Iterable<Bidder> all = bidderRepo.findAll();
+		return BeanCopier.copy(all, BidderDto.class);
 	}
 }

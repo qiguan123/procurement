@@ -14,4 +14,6 @@ public interface ProjectRepository extends PagingAndSortingRepository<Project, L
 
 	Page<Project> findByNameContaining(String name, Pageable pageRequest);
 
+	List<Project> findByCfrsIdIn(List<Long> cfrsIds);
+
 }

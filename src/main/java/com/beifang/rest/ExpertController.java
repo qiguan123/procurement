@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.beifang.common.PageResult;
 import com.beifang.model.Expert;
+import com.beifang.rest.vo.ExpertResponseVo;
 import com.beifang.service.ExpertService;
 import com.beifang.service.PackageService;
+import com.beifang.service.dto.ExpertDto;
 import com.beifang.service.dto.PackageDto;
+import com.beifang.util.BeanCopier;
 
 @RestController
 @RequestMapping("/expert")
@@ -63,5 +66,15 @@ public class ExpertController {
 			result.addAll(p.getExperts());
 		}
 		return new ArrayList<>(result);
+	}
+	
+	/**
+	 * 所有专家简单信息(id+姓名)
+	 */
+	@RequestMapping(path = "/simple", method = RequestMethod.GET)
+	@ResponseBody
+	public List<ExpertResponseVo> getSimpleAll() {
+		List<ExpertDto> dtos = expertService.getSimpleAll();
+		return BeanCopier.copy(dtos, ExpertResponseVo.class);
 	}
 }

@@ -408,6 +408,7 @@ public class PackageService {
 		List<PackageDto> pkgDtos = Arrays.asList(pkgDto);
 		setPkgsBidder(pkgDtos);
 		setPkgsExpert(pkgDtos);
+		setProjectName(pkgDtos);
 		return pkgDto;
 	}
 	
