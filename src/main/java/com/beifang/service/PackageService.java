@@ -37,6 +37,7 @@ import com.beifang.repository.ExpertRepository;
 import com.beifang.repository.PackageBidderRelRepository;
 import com.beifang.repository.PackageExpertRelRepository;
 import com.beifang.repository.PackageRepository;
+import com.beifang.service.dto.BidFinalResultDto;
 import com.beifang.service.dto.GradeItemDto;
 import com.beifang.service.dto.PackageDto;
 import com.beifang.service.dto.ProjectDto;
@@ -46,10 +47,6 @@ import com.beifang.util.ExcelUtil;
 import com.beifang.util.ListUtil;
 import com.beifang.util.MathUtil;
 import com.beifang.util.ZipUtil;
-import com.beifang.util.func.ExpertGetIdFunction;
-import com.beifang.util.func.PkgDtoGetIdFunction;
-import com.beifang.util.func.ProjectDtoGetIdFunction;
-import com.google.common.base.Function;
 import com.google.common.io.Files;
 
 @Service
@@ -102,11 +99,11 @@ public class PackageService {
 		if (ListUtil.isEmpty(pkgs)) {
 			return;
 		}
-		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, new PkgDtoGetIdFunction());
+		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, PackageDto::getId);
 		//所有评分条目
 		List<GradeItemDto> items = itemService.getItemsByPkgIds(pkgIds);
 		Map<Long, PackageDto> idWithPkgDtoMap = ListUtil.list2Map(
-				pkgs, new PkgDtoGetIdFunction());
+				pkgs, PackageDto::getId);
 		for (GradeItemDto item: items) {
 			PackageDto p = idWithPkgDtoMap.get(item.getPackageId());
 			p.getAllItems().add(item);
@@ -127,7 +124,7 @@ public class PackageService {
 		if (ListUtil.isEmpty(pkgs)) {
 			return;
 		}
-		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, new PkgDtoGetIdFunction());
+		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, PackageDto::getId);
 		List<BidPrice> bidPrices = bidPriceRepo.findByPackageIdIn(pkgIds);
 		for (PackageDto pkg: pkgs) {
 			for (BidPrice price: bidPrices) {
@@ -194,6 +191,9 @@ public class PackageService {
 	 */
 	public PackageDto getPkgWithScores(Long id) {
 		PackageDto pkgDto = getById(id);
+		if (pkgDto == null) {
+			return null;
+		}
 		setPkgsItemScore(Arrays.asList(pkgDto));
 		setPkgBidPrices(pkgDto);
 		return pkgDto;
@@ -215,13 +215,13 @@ public class PackageService {
 		}
 		List<PackageDto> pkgDtos = getAllByProjectIds(
 				ListUtil.extractDistinctList(
-						projects, new ProjectDtoGetIdFunction()));
+						projects, ProjectDto::getId));
 		if (ListUtil.isEmpty(pkgDtos)) {
 			return new ArrayList<>();
 		}
 		//设置包的项目名
 		Map<Long, ProjectDto> idWithProjectMap = ListUtil.list2Map(
-				projects, new ProjectDtoGetIdFunction());
+				projects, ProjectDto::getId);
 		for (PackageDto p: pkgDtos) {
 			p.setProjectName(idWithProjectMap.get(p.getProjectId()).getName());
 		}
@@ -246,25 +246,13 @@ public class PackageService {
 	 * 设置包的专家，设置包和专家的关系
 	 */
 	private void setPkgsExpert(List<PackageDto> pkgs) {
-		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, new PkgDtoGetIdFunction());
+		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, PackageDto::getId);
 		List<PackageExpertRelation> pkgExpertRels = pkgExpertRepo.findByPackageIdIn(pkgIds);
-		List<Long> expertIds = ListUtil.extractDistinctList(pkgExpertRels, 
-				new Function<PackageExpertRelation, Long>() {
-					@Override
-					public Long apply(PackageExpertRelation input) {
-						return input.getExpertId();
-					}
-		});
+		List<Long> expertIds = ListUtil.extractDistinctList(pkgExpertRels, PackageExpertRelation::getExpertId);
 		Iterable<Expert> experts = expertRepo.findAll(expertIds);
-		Map<Long, Expert> idWithExpertMap = ListUtil.list2Map(
-				experts, new Function<Expert, Long>() {
-					@Override
-					public Long apply(Expert input) {
-						return input.getId();
-					}
-		});
+		Map<Long, Expert> idWithExpertMap = ListUtil.list2Map(experts, Expert::getId);
 		Map<Long, PackageDto> idWithPkgDtoMap = ListUtil.list2Map(
-				pkgs, new PkgDtoGetIdFunction());
+				pkgs, PackageDto::getId);
 		for (PackageExpertRelation r : pkgExpertRels) {
 			PackageDto pkg = idWithPkgDtoMap.get(r.getPackageId());
 			pkg.getExperts().add(idWithExpertMap.get(r.getExpertId()));
@@ -272,30 +260,20 @@ public class PackageService {
 		}
 	}
 	/**
-	 * 设置包的投标厂商
+	 * 设置包的投标人，设置投标人与包的关系
 	 */
 	private void setPkgsBidder(List<PackageDto> pkgs) {
-		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, new PkgDtoGetIdFunction());
+		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, PackageDto::getId);
 		List<PackageBidderRelation> pkgBidderRels = pkgBidderRepo.findByPackageIdIn(pkgIds);
-		List<Long> bidderIds = ListUtil.extractDistinctList(
-				pkgBidderRels, new Function<PackageBidderRelation, Long>() {
-					@Override
-					public Long apply(PackageBidderRelation input) {
-						return input.getBidderId();
-					}
-				});
+		List<Long> bidderIds = ListUtil.extractDistinctList(pkgBidderRels, PackageBidderRelation::getBidderId);
 		Iterable<Bidder> bidders = bidderRepo.findAll(bidderIds);
-		Map<Long, Bidder> idWithBidderMap = ListUtil.list2Map(bidders, new Function<Bidder, Long>() {
-			@Override
-			public Long apply(Bidder input) {
-				return input.getId();
-			}
-		});
+		Map<Long, Bidder> idWithBidderMap = ListUtil.list2Map(bidders, Bidder::getId);
 		Map<Long, PackageDto> idWithPkgDtoMap = ListUtil.list2Map(
-				pkgs, new PkgDtoGetIdFunction());
+				pkgs, PackageDto::getId);
 		for (PackageBidderRelation r : pkgBidderRels) {
-			idWithPkgDtoMap.get(r.getPackageId()).getBidders().add(
-						idWithBidderMap.get(r.getBidderId()));
+			PackageDto pkg = idWithPkgDtoMap.get(r.getPackageId());
+			pkg.getBidders().add(idWithBidderMap.get(r.getBidderId()));
+			pkg.getBidderRels().add(r);
 		}
 	}
 
@@ -307,7 +285,7 @@ public class PackageService {
 		List<PackageDto> result = new ArrayList<>();
 		for (PackageDto p : pkgs) {
 			List<Long> expertIds = ListUtil.extractDistinctList(
-					p.getExperts(), new ExpertGetIdFunction());
+					p.getExperts(), Expert::getId);
 			if (expertIds.contains(expertId)) {
 				result.add(p);
 			}
@@ -412,6 +390,112 @@ public class PackageService {
 		return pkgDto;
 	}
 	
+	/**
+	 * 查询投标最终结果
+	 */
+	public PackageDto getDetailById(Long pkgId) {
+		PackageDto pkg = getPkgWithScores(pkgId);
+		if (pkg == null) {
+			return null;
+		}
+		//所有专家都提交则查询最终结果
+		if (isExpertAllSubmit(pkg.getExpertRels())) {
+			setBidFinalResult(pkg);
+		}
+		return pkg;
+	}
+	
+	/**
+	 * 专家都提交评分
+	 */
+	private boolean isExpertAllSubmit(List<PackageExpertRelation> expertRels) {
+		if (ListUtil.isEmpty(expertRels)) {
+			return false;
+		}
+		for (PackageExpertRelation r : expertRels) {
+			if (r == null || r.getModifiable() == 1) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private void setBidFinalResult(PackageDto pkg) {
+		List<BidFinalResultDto> results = new ArrayList<>();
+		//bidder <id, name>
+		Map<Long, String> bidderIdWithNameMap = ListUtil.list2Map(
+			pkg.getBidders(), Bidder::getId, Bidder::getName);
+		//bidder <id, price>
+		Map<Long, Double> bidderIdWithPriceMap = ListUtil.list2Map(
+			pkg.getBidPrices(), BidPrice::getBidderId, BidPrice::getPrice);
+		
+		GradeItemDto totalItem = pkg.getTotalItem();
+		List<ItemScore> finalScores = totalItem.getScores();
+		//设置投标人平均分
+		setBidderMeanScore(pkg.getBidderRels(), finalScores);
+		//专家评分，针对每个投标人，专家顺序为id由小到大
+		Map<Long, List<String>> bidderExpertScoresMap = getBidderExpertScoresMap(finalScores);
+		//按得分由高到低排序
+		pkg.getBidderRels().sort((a, b) -> a.getMeanScore() > b.getMeanScore() ? 1 : -1);
+		for (PackageBidderRelation r: pkg.getBidderRels()) {
+			BidFinalResultDto result = new BidFinalResultDto();
+			result.setBidderName(bidderIdWithNameMap.get(r.getBidderId()));
+			result.setBidPrice(String.valueOf(bidderIdWithPriceMap.get(r.getBidderId())));
+			result.setExpertScores(bidderExpertScoresMap.get(r.getBidderId()));
+			results.add(result);
+		}
+		pkg.setFinalResult(results);
+	}
+
+	private Map<Long, List<String>> getBidderExpertScoresMap(List<ItemScore> finalScores) {
+		Map<Long, List<String>> result = new HashMap<>();
+		Map<Long, List<ItemScore>> bidderScores = new HashMap<>();
+		for (ItemScore s : finalScores) {
+			Long bidderId = s.getBidderId();
+			List<ItemScore> scores = bidderScores.getOrDefault(bidderId, new ArrayList<>());
+			scores.add(s);
+			bidderScores.put(bidderId, scores);
+		}
+		for (Long bidderId: bidderScores.keySet()) {
+			bidderScores.get(bidderId).sort((a,b) -> a.getExpertId() > b.getExpertId() ? 1 : -1);
+			List<String> sortedScoreStringList = ListUtil.extractDistinctList(
+					bidderScores.get(bidderId), t->t.getScore() + "");
+			result.put(bidderId, sortedScoreStringList);
+		}
+		return result;
+	}
+
+	/**
+	 * 设置投标人平均分，去除一个最高、一个最低
+	 */
+	private void setBidderMeanScore(List<PackageBidderRelation> bidderRels, List<ItemScore> finalScores) {
+		Double firstMeanScore = bidderRels.get(0).getMeanScore();
+		if (firstMeanScore != null && firstMeanScore != 0) {
+			return;
+		}
+		Map<Long, Double> bidderMaxScore = new HashMap<>();
+		Map<Long, Double> bidderMinScore = new HashMap<>();
+		Map<Long, Double> bidderTotalScore = new HashMap<>();
+		for (ItemScore s: finalScores) {
+			Long bidderId = s.getBidderId();
+			if (bidderMaxScore.get(bidderId) == null || bidderMaxScore.get(bidderId) < s.getScore()) {
+				bidderMaxScore.put(bidderId, s.getScore());
+			}
+			if (bidderMinScore.get(bidderId) == null || bidderMinScore.get(bidderId) > s.getScore()) {
+				bidderMinScore.put(bidderId, s.getScore());
+			}
+			bidderTotalScore.compute(bidderId, (k, v) -> v == null ? s.getScore() : v + s.getScore());
+		}
+		for (PackageBidderRelation r : bidderRels) {
+			Long bidderId = r.getBidderId();
+			Double finalMeanScore = MathUtil.toDecimal(
+					bidderTotalScore.get(bidderId) - bidderMaxScore.get(bidderId) - bidderMinScore.get(bidderId),
+					2);
+			r.setMeanScore(finalMeanScore);
+		}
+		pkgBidderRepo.save(bidderRels);
+	}
+
 	/**
 	 * 提交评分表 =》修改PackageExpertRelation的modifiable状态为0
 	 * 设置总分项目

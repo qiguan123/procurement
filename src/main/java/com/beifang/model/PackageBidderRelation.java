@@ -10,6 +10,7 @@ public class PackageBidderRelation {
 	private Long id;
 	private Long packageId;
 	private Long bidderId;
+	private Double meanScore;
 	
 	public PackageBidderRelation() {
 		super();
@@ -36,6 +37,12 @@ public class PackageBidderRelation {
 	}
 	public void setBidderId(Long bidderId) {
 		this.bidderId = bidderId;
+	}
+	public Double getMeanScore() {
+		return meanScore;
+	}
+	public void setMeanScore(Double meanScore) {
+		this.meanScore = meanScore;
 	}
 	
 }

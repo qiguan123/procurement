@@ -6,6 +6,7 @@ import java.util.List;
 import com.beifang.model.BidPrice;
 import com.beifang.model.Bidder;
 import com.beifang.model.Expert;
+import com.beifang.model.PackageBidderRelation;
 import com.beifang.model.PackageExpertRelation;
 
 public class PackageDto {
@@ -20,6 +21,7 @@ public class PackageDto {
 	private List<Expert> experts = new ArrayList<>();
 	private List<Bidder> bidders = new ArrayList<>();
 	private List<PackageExpertRelation> expertRels = new ArrayList<>();
+	private List<PackageBidderRelation> bidderRels = new ArrayList<>();
 	
 	private List<Long> bidderIds = new ArrayList<>();
 	private List<Long> expertIds = new ArrayList<>();
@@ -30,7 +32,22 @@ public class PackageDto {
 	private GradeItemDto priceItem;
 	private GradeItemDto totalItem;
 	
+	private List<BidFinalResultDto> finalResult = new ArrayList<>();
 	
+	
+	
+	public List<PackageBidderRelation> getBidderRels() {
+		return bidderRels;
+	}
+	public void setBidderRels(List<PackageBidderRelation> bidderRels) {
+		this.bidderRels = bidderRels;
+	}
+	public List<BidFinalResultDto> getFinalResult() {
+		return finalResult;
+	}
+	public void setFinalResult(List<BidFinalResultDto> finalResult) {
+		this.finalResult = finalResult;
+	}
 	public List<PackageExpertRelation> getExpertRels() {
 		return expertRels;
 	}

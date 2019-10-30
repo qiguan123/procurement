@@ -22,6 +22,7 @@ import com.beifang.exception.UploadGradeTableException;
 import com.beifang.model.BidPrice;
 import com.beifang.model.ItemScore;
 import com.beifang.rest.vo.ItemScoreRequestVo;
+import com.beifang.rest.vo.PackageDetailResponseVo;
 import com.beifang.rest.vo.PackageRequestVo;
 import com.beifang.rest.vo.PackageResponseVo;
 import com.beifang.rest.vo.PriceWithPriceItemRequestVo;
@@ -162,12 +163,13 @@ public class PackageController {
 	}
 	
 	/**
-	 * 根据id查看
+	 * 根据id查看详情
 	 */
-	@RequestMapping(path = "/{id}", method = RequestMethod.GET)
+	@RequestMapping(path = "/detail/{id}", method = RequestMethod.GET)
 	@ResponseBody
-	public PackageDto getById(@PathVariable Long id) {
-		return packageService.getById(id);
+	public PackageDetailResponseVo getDetailById(@PathVariable Long id) {
+		PackageDto pkg = packageService.getDetailById(id);
+		return BeanCopier.copy(pkg, PackageDetailResponseVo.class);
 	}
 	
 	/**

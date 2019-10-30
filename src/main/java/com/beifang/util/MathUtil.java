@@ -10,6 +10,6 @@ public class MathUtil {
 		System.out.println(0.1);
 		System.out.println(0.1 + 0.1);
 		System.out.println(1000.1 + 0.1 + 0.1);
-		System.out.println(toDecimal(1000.1 + 0.1 + 0.1, 2));
+		System.out.println(toDecimal(1000.1 + 0.1 + 0.1333333, 3));
 	}
 }

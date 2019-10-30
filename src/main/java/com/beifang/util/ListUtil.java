@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.beifang.model.Bidder;
+
 public class ListUtil {
 	public static <T> boolean isEmpty(List<T> list) {
 		if (list == null || list.isEmpty() || list.get(0) == null) {
@@ -40,6 +42,20 @@ public class ListUtil {
 			result.put(key.apply(f), value.apply(f));
 		}
 		return result;
+	}
+	
+	public static void main(String[] args) {
+		List<Bidder> bidders = new ArrayList<>();
+		for (int i = 0; i<5 ; i++) {
+			Bidder b = new Bidder();
+			b.setId(i + 0L);
+			b.setName((5-i) + "");
+			bidders.add(b);
+		}
+		Map<Long, String> map = list2Map(bidders, Bidder::getId, Bidder::getName);
+		for (int i =0; i<5; i++) {
+			System.out.println(map.get(i + 0L));
+		}
 	}
 	
 }
