@@ -72,6 +72,15 @@ public class ConferenceController {
 	}
 	
 	/**
+	 *未开始的会议列表
+	 */
+	@RequestMapping(path = "/closed", method = RequestMethod.GET)
+	public List<ConferenceResponseVo> getClosedCfrsList() {
+		List<ConferenceDto> cfrsList = cfrsService.getClosedCfrsList();
+		return BeanCopier.copy(cfrsList, ConferenceResponseVo.class);
+	}
+	
+	/**
 	 * 创建会议
 	 */
 	@RequestMapping(path = "", method = RequestMethod.POST)

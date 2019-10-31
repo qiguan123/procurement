@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -436,11 +438,12 @@ public class PackageService {
 		//专家评分，针对每个投标人，专家顺序为id由小到大
 		Map<Long, List<String>> bidderExpertScoresMap = getBidderExpertScoresMap(finalScores);
 		//按得分由高到低排序
-		pkg.getBidderRels().sort((a, b) -> a.getMeanScore() > b.getMeanScore() ? 1 : -1);
+		pkg.getBidderRels().sort((a, b) -> a.getMeanScore() > b.getMeanScore() ? -1 : 1);
 		for (PackageBidderRelation r: pkg.getBidderRels()) {
 			BidFinalResultDto result = new BidFinalResultDto();
 			result.setBidderName(bidderIdWithNameMap.get(r.getBidderId()));
 			result.setBidPrice(String.valueOf(bidderIdWithPriceMap.get(r.getBidderId())));
+			result.setFinalScore(r.getMeanScore() + "");
 			result.setExpertScores(bidderExpertScoresMap.get(r.getBidderId()));
 			results.add(result);
 		}
@@ -458,7 +461,7 @@ public class PackageService {
 		}
 		for (Long bidderId: bidderScores.keySet()) {
 			bidderScores.get(bidderId).sort((a,b) -> a.getExpertId() > b.getExpertId() ? 1 : -1);
-			List<String> sortedScoreStringList = ListUtil.extractDistinctList(
+			List<String> sortedScoreStringList = ListUtil.extractList(
 					bidderScores.get(bidderId), t->t.getScore() + "");
 			result.put(bidderId, sortedScoreStringList);
 		}
@@ -476,6 +479,7 @@ public class PackageService {
 		Map<Long, Double> bidderMaxScore = new HashMap<>();
 		Map<Long, Double> bidderMinScore = new HashMap<>();
 		Map<Long, Double> bidderTotalScore = new HashMap<>();
+		Set<Long> expertIds = new HashSet<>();
 		for (ItemScore s: finalScores) {
 			Long bidderId = s.getBidderId();
 			if (bidderMaxScore.get(bidderId) == null || bidderMaxScore.get(bidderId) < s.getScore()) {
@@ -485,11 +489,13 @@ public class PackageService {
 				bidderMinScore.put(bidderId, s.getScore());
 			}
 			bidderTotalScore.compute(bidderId, (k, v) -> v == null ? s.getScore() : v + s.getScore());
+			expertIds.add(s.getExpertId());
 		}
 		for (PackageBidderRelation r : bidderRels) {
 			Long bidderId = r.getBidderId();
 			Double finalMeanScore = MathUtil.toDecimal(
-					bidderTotalScore.get(bidderId) - bidderMaxScore.get(bidderId) - bidderMinScore.get(bidderId),
+					(bidderTotalScore.get(bidderId) - bidderMaxScore.get(bidderId) 
+						- bidderMinScore.get(bidderId)) / (expertIds.size() - 2),
 					2);
 			r.setMeanScore(finalMeanScore);
 		}

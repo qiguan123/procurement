@@ -107,4 +107,9 @@ public class ConferenceService {
 		Iterable<Conference> cfrsList = cfrsRepo.findAll(ids);
 		return BeanCopier.copy(cfrsList, ConferenceDto.class);
 	}
+
+	public List<ConferenceDto> getClosedCfrsList() {
+		List<Conference> cfrsList = cfrsRepo.findByState(1);
+		return BeanCopier.copy(cfrsList, ConferenceDto.class);
+	}
 }

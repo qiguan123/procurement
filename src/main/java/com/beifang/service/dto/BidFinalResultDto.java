@@ -9,8 +9,16 @@ import java.util.List;
 public class BidFinalResultDto {
 	private String bidderName;
 	private String bidPrice;
+	private String finalScore;
 	private List<String> expertScores = new ArrayList<>();
 	
+	
+	public String getFinalScore() {
+		return finalScore;
+	}
+	public void setFinalScore(String finalScore) {
+		this.finalScore = finalScore;
+	}
 	public String getBidderName() {
 		return bidderName;
 	}

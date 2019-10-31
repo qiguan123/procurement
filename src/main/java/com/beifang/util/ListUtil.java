@@ -17,6 +17,16 @@ public class ListUtil {
 		return false;
 	}
 	
+	public static <F, T> List<T> extractList(Iterable<F> list, Function<F, T> get) {
+		List<T> result = new ArrayList<>();
+		Iterator<F> itr = list.iterator();
+		while (itr.hasNext()) {
+			F f = itr.next();
+			result.add(get.apply(f));
+		}
+		return result;
+	}
+	
 	public static <F, T> List<T> extractDistinctList(Iterable<F> list, Function<F, T> get) {
 		List<T> result = new ArrayList<>();
 		Map<T, F> map = list2Map(list, get);
