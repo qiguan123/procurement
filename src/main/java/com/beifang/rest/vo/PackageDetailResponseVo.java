@@ -14,8 +14,8 @@ public class PackageDetailResponseVo {
 	private String projectName;
 	private List<Expert> experts = new ArrayList<>();
 	private List<Bidder> bidders = new ArrayList<>();
+	//按照综合得分由高到低排序
 	private List<BidFinalResultResponseVo> finalResult = new ArrayList<>();
-	
 	
 	public List<Expert> getExperts() {
 		return experts;

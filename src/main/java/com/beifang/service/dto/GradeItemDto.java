@@ -25,7 +25,17 @@ public class GradeItemDto {
 	private List<ItemScore> scores = new ArrayList<>();
 	private Map<Long, Map<Long, ItemScore>> expertBidderScores =
 			new LinkedHashMap<>();
+	//Bidder id 由小到大排序
+	private List<String> bidderScores = new ArrayList<>();
 
+	
+	public List<String> getBidderScores() {
+		return bidderScores;
+	}
+
+	public void setBidderScores(List<String> bidderScores) {
+		this.bidderScores = bidderScores;
+	}
 
 	public String getRelateFilesName() {
 		return relateFilesName;

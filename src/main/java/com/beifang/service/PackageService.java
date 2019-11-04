@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -246,6 +245,7 @@ public class PackageService {
 	
 	/**
 	 * 设置包的专家，设置包和专家的关系
+	 * 专家id由小到大
 	 */
 	private void setPkgsExpert(List<PackageDto> pkgs) {
 		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, PackageDto::getId);
@@ -260,9 +260,13 @@ public class PackageService {
 			pkg.getExperts().add(idWithExpertMap.get(r.getExpertId()));
 			pkg.getExpertRels().add(r);
 		}
+		for (PackageDto p: pkgs) {
+			p.getExperts().sort((a,b) -> a.getId() > b.getId() ? 1 : -1);
+		}
 	}
 	/**
 	 * 设置包的投标人，设置投标人与包的关系
+	 * 投标人顺序 按照id由小到大
 	 */
 	private void setPkgsBidder(List<PackageDto> pkgs) {
 		List<Long> pkgIds = ListUtil.extractDistinctList(pkgs, PackageDto::getId);
@@ -276,6 +280,9 @@ public class PackageService {
 			PackageDto pkg = idWithPkgDtoMap.get(r.getPackageId());
 			pkg.getBidders().add(idWithBidderMap.get(r.getBidderId()));
 			pkg.getBidderRels().add(r);
+		}
+		for (PackageDto p: pkgs) {
+			p.getBidders().sort((a,b) -> a.getId() > b.getId() ? 1 : -1);
 		}
 	}
 
@@ -547,7 +554,7 @@ public class PackageService {
 	 * 基准价法的   价格的评分
 	 */
 	public void setPriceAndPriceScore(Long pkgId, List<BidPrice> prices) {
-		bidPriceRepo.save(prices);
+		//bidPriceRepo.save(prices);
 		PackageDto pkgDto = getPkgWithScores(pkgId);
 		//基准价法
 		setPriceScores(prices, pkgDto.getPriceItem().getScores(),
@@ -574,18 +581,17 @@ public class PackageService {
 			 //fix double precision problem
 			 percent += 0.000001;
 			 if (percent > 0) {
+				 double roundPercent = MathUtil.toDecimal(percent, 0);
+				 roundPercent = (roundPercent < maxValue) ? roundPercent : maxValue;
 				 bidderPrices.put(p.getBidderId(), 
-					new BigDecimal(maxValue).subtract(new BigDecimal(Math.round(percent))).doubleValue());
+					MathUtil.toDecimal(maxValue - roundPercent, 1));
 			 } else {
+				 double roundPercent = MathUtil.toDecimal(-1 * percent, 0) * 0.8;
+				 roundPercent = (roundPercent < maxValue) ? roundPercent : maxValue;
 				 bidderPrices.put(p.getBidderId(), 
-					new BigDecimal(maxValue).subtract(new BigDecimal(Math.round(-1 * percent) * 0.8)).doubleValue());
+				    MathUtil.toDecimal(maxValue - roundPercent, 1));
 			 }
 		 }
-		 for (ItemScore s: scores) {
-			 double priceScore = bidderPrices.get(s.getBidderId());
-			 s.setScore(priceScore < 0 ? 0 : priceScore);
-		 }
-		 
 	}
 
 	public PageResult<PackageDto> getPageByName(Integer page, Integer limit, String name) {
@@ -612,6 +618,16 @@ public class PackageService {
 		for (PackageDto p: pkgDtos) {
 			p.setProjectName(projectIdWithNameMap.get(p.getProjectId()));
 		}
+	}
+
+	public PackageDto getExpertScore(Long id, Long expertId) {
+		PackageDto pkg = getById(id);
+		if (pkg == null) {
+			return null;
+		}
+		List<GradeItemDto> items = itemService.getExpertScoresByPkgId(id, expertId);
+		pkg.setAllItems(items);
+		return pkg;
 	}
 	
 

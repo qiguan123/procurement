@@ -20,9 +20,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.beifang.common.PageResult;
 import com.beifang.exception.UploadGradeTableException;
 import com.beifang.model.BidPrice;
+import com.beifang.model.Expert;
 import com.beifang.model.ItemScore;
+import com.beifang.rest.vo.GradeItemResponseVo;
 import com.beifang.rest.vo.ItemScoreRequestVo;
 import com.beifang.rest.vo.PackageDetailResponseVo;
+import com.beifang.rest.vo.PackageExpertScoreResponseVo;
 import com.beifang.rest.vo.PackageRequestVo;
 import com.beifang.rest.vo.PackageResponseVo;
 import com.beifang.rest.vo.PriceWithPriceItemRequestVo;
@@ -195,7 +198,31 @@ public class PackageController {
 		}
 		return pkgDto;
 	}
-	
+	/**
+	 * 查看专家对包的评分(含所有评分项、分数)
+	 */
+	@RequestMapping(path = "/{id}/expert/{expertId}/score", method = RequestMethod.GET)
+	@ResponseBody
+	public PackageExpertScoreResponseVo getExpertScore(@PathVariable Long id, @PathVariable Long expertId) {
+		PackageDto pkgDto = packageService.getExpertScore(id, expertId);
+		return makePackageExpertScoreResponseVo(pkgDto, expertId);
+	}
+
+	private PackageExpertScoreResponseVo makePackageExpertScoreResponseVo(PackageDto pkgDto, Long expertId) {
+		PackageExpertScoreResponseVo result = new PackageExpertScoreResponseVo();
+		result.setPkgName(pkgDto.getName());
+		String expertName = "";
+		for (Expert e : pkgDto.getExperts()) {
+			if (e.getId() == expertId) {
+				expertName = e.getName();
+				break;
+			}
+		}
+		result.setExpertName(expertName);
+		result.setBidders(pkgDto.getBidders());
+		result.setAllItems(BeanCopier.copy(pkgDto.getAllItems(), GradeItemResponseVo.class));
+		return result;
+	}
 	
 	/**********************管理端**END******************************************/
 	

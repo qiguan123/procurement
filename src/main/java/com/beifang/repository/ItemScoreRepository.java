@@ -10,4 +10,6 @@ public interface ItemScoreRepository extends CrudRepository<ItemScore, Long>{
 
 	List<ItemScore> findByItemIdIn(List<Long> itemIds);
 
+	List<ItemScore> findByExpertIdAndItemIdIn(Long expertId, List<Long> itemIds);
+
 }

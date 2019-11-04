@@ -91,12 +91,11 @@ public class GradeItemService {
 	}
 
 	/**
-	 * 查询包的价格条目、价格分数
+	 * 查询包的价格条目、价格分数、其他评分
 	 */
 	public List<GradeItemDto> getItemsByPkgIds(List<Long> pkgIds) {
-		List<GradeItemDto> result = new ArrayList<>();
 		if (ListUtil.isEmpty(pkgIds)) {
-			return result;
+			return new ArrayList<>();
 		}
 		List<GradeItem> items = itemRepo.findByPackageIdIn(pkgIds);
 		List<GradeItemDto> itemDtos = BeanCopier.copy(items, GradeItemDto.class);
@@ -106,14 +105,14 @@ public class GradeItemService {
 		Map<Long, GradeItemDto> idWithItemMap = ListUtil.list2Map(
 				itemDtos, new GradeItemDtoGetIdFunction());
 		for(ItemScore s: scores) {
-			GradeItemDto pkg = idWithItemMap.get(s.getItemId());
-			pkg.getScores().add(s);
-			Map<Long, ItemScore> bidderPriceMap = pkg.getExpertBidderScores().get(s.getExpertId());
+			GradeItemDto item = idWithItemMap.get(s.getItemId());
+			item.getScores().add(s);
+			Map<Long, ItemScore> bidderPriceMap = item.getExpertBidderScores().get(s.getExpertId());
 			if (bidderPriceMap == null) {
 				bidderPriceMap = new HashMap<>();
 			}
 			bidderPriceMap.put(s.getBidderId(), s);
-			pkg.getExpertBidderScores().put(s.getExpertId(), bidderPriceMap);
+			item.getExpertBidderScores().put(s.getExpertId(), bidderPriceMap);
 		}
 		return itemDtos;
 	}
@@ -135,6 +134,27 @@ public class GradeItemService {
 
 	public void updateScoreList(List<ItemScore> expertScores) {
 		scoreRepo.save(expertScores);
+	}
+	
+	/**
+	 * 查询专家对包的评分
+	 */
+	public List<GradeItemDto> getExpertScoresByPkgId(Long pkgId, Long expertId) {
+		List<GradeItem> items = itemRepo.findByPackageId(pkgId);
+		List<GradeItemDto> itemDtos = BeanCopier.copy(items, GradeItemDto.class);
+		List<Long> itemIds = ListUtil.extractDistinctList(itemDtos, GradeItemDto::getId);
+		List<ItemScore> scores = scoreRepo.findByExpertIdAndItemIdIn(expertId, itemIds);
+		Map<Long, GradeItemDto> idWithItemMap = ListUtil.list2Map(
+				itemDtos, new GradeItemDtoGetIdFunction());
+		for(ItemScore s: scores) {
+			GradeItemDto item = idWithItemMap.get(s.getItemId());
+			item.getScores().add(s);
+		}
+		for (GradeItemDto item: itemDtos) {
+			item.getScores().sort((a, b) -> a.getBidderId() > b.getBidderId() ? 1 : -1);
+			item.setBidderScores(ListUtil.extractList(item.getScores(), a->a.getScore() + ""));
+		}
+		return itemDtos;
 	}
 
 }

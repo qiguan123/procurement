@@ -3,6 +3,9 @@ package com.beifang.rest.vo;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 投标详情页的结果排名
+ */
 public class BidFinalResultResponseVo {
 	private String bidderName;
 	private String bidPrice;
