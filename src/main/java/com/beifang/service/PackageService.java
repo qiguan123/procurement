@@ -630,5 +630,10 @@ public class PackageService {
 		return pkg;
 	}
 	
+	public List<PackageDto> getByProjectIds(List<Long> projectIds) {
+		List<ProcurePackage> pkgs = packageRepo.findByProjectIdIn(projectIds);
+		return BeanCopier.copy(pkgs, PackageDto.class);
+	}
+	
 
 }
