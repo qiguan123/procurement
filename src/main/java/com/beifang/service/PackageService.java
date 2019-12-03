@@ -554,19 +554,49 @@ public class PackageService {
 	 * 基准价法的   价格的评分
 	 */
 	public void setPriceAndPriceScore(Long pkgId, List<BidPrice> prices) {
-		//bidPriceRepo.save(prices);
+		bidPriceRepo.save(prices);
 		PackageDto pkgDto = getPkgWithScores(pkgId);
-		//基准价法
-		setPriceScores(prices, pkgDto.getPriceItem().getScores(),
-				pkgDto.getPriceItem().getMaxValue());
+		//平均价法
+		if (pkgDto.getPriceStandardType() == 1) {
+			setPriceScoresByMeanMethod(prices, pkgDto.getPriceItem().getScores(),
+					pkgDto.getPriceItem().getMaxValue(), 
+					pkgDto.getHigherDeduction(), pkgDto.getLowerDeduction());
+		} else if (pkgDto.getPriceStandardType() == 2) {//最低价法
+			setPriceScoresByLowestMethod(prices, pkgDto.getPriceItem().getScores(),
+					pkgDto.getPriceItem().getMaxValue());
+		}
 		itemService.updateItemScores(pkgDto.getPriceItem());
+	}
+
+	private void setPriceScoresByLowestMethod(List<BidPrice> prices, List<ItemScore> scores, Double maxValue) {
+		if (ListUtil.isEmpty(prices) || ListUtil.isEmpty(scores)) {
+			 return;
+		}
+		double minPrice = Double.MAX_VALUE;
+		for (BidPrice price : prices) {
+			if (price.getPrice() != null && price.getPrice() < minPrice) {
+				minPrice = price.getPrice();
+			}
+		}
+		Map<Long, Double> bidScoreMap = new HashMap<>();
+		for (BidPrice price: prices) {
+			if (price.getPrice() != null) {
+				bidScoreMap.put(price.getBidderId(), 
+					MathUtil.toDecimal(minPrice / price.getPrice() * maxValue, 2));
+			}
+		}
+		for (ItemScore score: scores) {
+			score.setScore(bidScoreMap.get(score.getBidderId()));
+		}
 	}
 
 	/**
 	 * 基准价法设置价格分
 	 */
-	private void setPriceScores(List<BidPrice> prices, 
-			List<ItemScore> scores, double maxValue) {
+	private void setPriceScoresByMeanMethod(List<BidPrice> prices, 
+			List<ItemScore> scores, double maxValue, 
+			Double higherDeduction, Double lowerDeduction) {
+		
 		 if (ListUtil.isEmpty(prices) || ListUtil.isEmpty(scores)) {
 			 return;
 		 }
@@ -580,17 +610,22 @@ public class PackageService {
 			 double percent = (p.getPrice() - mean) / mean * 100;
 			 //fix double precision problem
 			 percent += 0.000001;
+			 double deduction = 0.0;
 			 if (percent > 0) {
 				 double roundPercent = MathUtil.toDecimal(percent, 0);
-				 roundPercent = (roundPercent < maxValue) ? roundPercent : maxValue;
-				 bidderPrices.put(p.getBidderId(), 
-					MathUtil.toDecimal(maxValue - roundPercent, 1));
+				 deduction = MathUtil.toDecimal(roundPercent * higherDeduction, 2);
+				 
 			 } else {
-				 double roundPercent = MathUtil.toDecimal(-1 * percent, 0) * 0.8;
-				 roundPercent = (roundPercent < maxValue) ? roundPercent : maxValue;
-				 bidderPrices.put(p.getBidderId(), 
-				    MathUtil.toDecimal(maxValue - roundPercent, 1));
+				 double roundPercent = MathUtil.toDecimal(-1 * percent, 0);
+				 deduction = MathUtil.toDecimal(roundPercent * lowerDeduction, 2);
 			 }
+			 deduction = (deduction < maxValue) ? deduction : maxValue;
+			 bidderPrices.put(p.getBidderId(), 
+				MathUtil.toDecimal(maxValue - deduction, 2));
+		 }
+		 for (ItemScore s: scores) {
+			 double priceScore = bidderPrices.get(s.getBidderId());
+			 s.setScore(priceScore < 0 ? 0 : priceScore);
 		 }
 	}
 

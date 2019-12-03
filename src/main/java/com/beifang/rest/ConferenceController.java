@@ -30,12 +30,12 @@ public class ConferenceController {
 	 * 当前进行的会议
 	 */
 	@RequestMapping(path = "/ongoing", method = RequestMethod.GET)
-	public ConferenceResponseVo getOngoingConference() {
+	public List<ConferenceResponseVo> getOngoingConference() {
 		List<ConferenceDto> conferences = cfrsService.getAllByState(2);
 		if (ListUtil.isEmpty(conferences)) {
 			throw new NoConferenceException();
 		}
-		return BeanCopier.copy(conferences.get(0), ConferenceResponseVo.class);
+		return BeanCopier.copy(conferences, ConferenceResponseVo.class);
 	}
 	
 	/**

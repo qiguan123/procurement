@@ -4,9 +4,16 @@ public class ConferenceRequestVo {
 	private Long id;
 	private String name;
 	private Long startTime;
+	private String address;
 	//0-新建会议；1-会议完成；2-会议启动
 	private Integer state;
 	
+	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
 	public Long getId() {
 		return id;
 	}
